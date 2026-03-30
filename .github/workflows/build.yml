@@ -41,8 +41,14 @@ jobs:
           rm -f .config
           echo "CONFIG_TARGET_ramips=y" >> .config
           echo "CONFIG_TARGET_ramips_mt7620=y" >> .config
-          echo 'CONFIG_TARGET_DEVICE_ramips_mt7620_DEVICE_netgear_jr6150=y' >> .config
+          echo "CONFIG_TARGET_DEVICE_ramips_mt7620_DEVICE_netgear_jr6150=y" >> .config
+          echo "CONFIG_TARGET_PER_DEVICE_ROOTFS=y" >> .config
+          echo "CONFIG_NAND_SUPPORT=y" >> .config
+          echo "CONFIG_USES_UBIFS=y" >> .config
           make defconfig
+
+      - name: Check NAND devices
+        run: grep -B5 "UBINIZE_OPTS\|PAGESIZE" target/linux/ramips/image/mt7620.mk | head -30
 
       - name: Debug config
         run: |
