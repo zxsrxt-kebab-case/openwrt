@@ -1,0 +1,288 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+#include "mt7620a.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+#include <dt-bindings/mtd/partitions/uimage.h>
+
+/ {
+	compatible = "netgear,jr6150", "ralink,mt7620a-soc";
+	model = "Netgear JR6150";
+
+	aliases {
+		led-boot = &led_power_green;
+		led-failsafe = &led_power_amber;
+		led-running = &led_power_green;
+		led-upgrade = &led_power_amber;
+		label-mac-device = &ethernet;
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,57600";
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led_power_green: power_green {
+			function = LED_FUNCTION_POWER;
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&gpio2 30 GPIO_ACTIVE_LOW>; /* GPIO 70 */
+		};
+
+		led_power_amber: power_amber {
+			function = LED_FUNCTION_POWER;
+			color = <LED_COLOR_ID_AMBER>;
+			gpios = <&gpio2 31 GPIO_ACTIVE_LOW>; /* GPIO 71 */
+		};
+
+		wan_green {
+			function = LED_FUNCTION_WAN;
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&gpio0 20 GPIO_ACTIVE_LOW>; /* GPIO 20 */
+		};
+
+		wan_amber {
+			function = LED_FUNCTION_WAN;
+			color = <LED_COLOR_ID_AMBER>;
+			gpios = <&gpio1 8 GPIO_ACTIVE_LOW>; /* GPIO 30 */
+		};
+
+		wlan {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&gpio2 0 GPIO_ACTIVE_LOW>; /* GPIO 40 */
+			linux,default-trigger = "phy0tpt";
+		};
+
+		usb {
+			function = LED_FUNCTION_USB;
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&gpio2 20 GPIO_ACTIVE_LOW>; /* GPIO 60 */
+			trigger-sources = <&ohci_port1>, <&ehci_port1>;
+			linux,default-trigger = "usbport";
+		};
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		/*
+		 * From power-button.c: SURF_POWER_BUTTON_MASK = 0x8
+		 * (bit 3) checked on PIODATA2 register (offset 0x60).
+		 * If PIODATA2 maps to GPIO bank 2 (GPIO 40-71), then
+		 * the reset/power button is GPIO 43 (gpio2 pin 3).
+		 *
+		 * NOTE: power-button.c uses non-standard base addresses
+		 * (0x300600 vs MT7620's 0x10000600), so this mapping
+		 * may be legacy/incorrect. WPS button GPIO not found
+		 * in source. Both MUST be verified on actual hardware.
+		 */
+		reset {
+			label = "reset";
+			gpios = <&gpio2 3 GPIO_ACTIVE_LOW>; /* GPIO 43 — bit 3 of PIODATA2 */
+			linux,code = <KEY_RESTART>;
+		};
+
+		wps {
+			label = "wps";
+			gpios = <&gpio0 2 GPIO_ACTIVE_LOW>; /* TODO: verify on hardware */
+			linux,code = <KEY_WPS_BUTTON>;
+		};
+	};
+};
+
+&spi0 {
+	status = "okay";
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+
+		/*
+		 * This device uses 128 MB NAND flash, not SPI NOR.
+		 * For OpenWrt, nand@0 under &nand controller is the
+		 * correct approach. See the &nand node below.
+		 * This spi0 node should be disabled if not used.
+		 */
+		status = "disabled";
+	};
+};
+
+&nand {
+	status = "okay";
+
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		partition@0 {
+			label = "u-boot";
+			reg = <0x0 0x100000>;
+			read-only;
+		};
+
+		partition@100000 {
+			label = "sc-pid";
+			reg = <0x100000 0x100000>;
+			read-only;
+		};
+
+		partition@200000 {
+			label = "kernel";
+			reg = <0x200000 0x400000>;
+		};
+
+		partition@600000 {
+			label = "ubi";
+			reg = <0x600000 0x1c00000>;
+		};
+
+		/*
+		 * Stock firmware layout for reference:
+		 *   0x2200000 - 0x2e00000: Language UI packages (6x 2MB)
+		 *   0x2e00000 - 0x2f00000: WiFi calibration data
+		 *   0x2f00000 - 0x3000000: SC Private Data
+		 *   0x3000000 - 0x3200000: POT
+		 *   0x3200000 - 0x3400000: Traffic Meter
+		 *   0x3400000 - 0x3600000: DPF
+		 *   0x3600000 - 0x3800000: SC Nvram
+		 *   0x3800000 - 0x3a00000: Ralink Nvram
+		 *   0x3a00000+           : Reserved blocks
+		 */
+
+		partition@2200000 {
+			label = "lang";
+			reg = <0x2200000 0xc00000>;
+			read-only;
+		};
+
+		factory: partition@2e00000 {
+			label = "factory";
+			reg = <0x2e00000 0x100000>;
+			read-only;
+
+			nvmem-layout {
+				compatible = "fixed-layout";
+				#address-cells = <1>;
+				#size-cells = <1>;
+
+				eeprom_2g: eeprom@0 {
+					reg = <0x0 0x200>;
+				};
+
+				eeprom_5g: eeprom@8000 {
+					reg = <0x8000 0x200>;
+				};
+
+				macaddr_2g: macaddr@4 {
+					reg = <0x4 0x6>;
+				};
+
+				macaddr_5g: macaddr@8004 {
+					reg = <0x8004 0x6>;
+				};
+			};
+		};
+
+		partition@2f00000 {
+			label = "sc-private";
+			reg = <0x2f00000 0x100000>;
+			read-only;
+		};
+
+		partition@3000000 {
+			label = "pot";
+			reg = <0x3000000 0x200000>;
+		};
+
+		partition@3200000 {
+			label = "traffic-meter";
+			reg = <0x3200000 0x200000>;
+		};
+
+		partition@3400000 {
+			label = "dpf";
+			reg = <0x3400000 0x200000>;
+		};
+
+		partition@3600000 {
+			label = "sc-nvram";
+			reg = <0x3600000 0x200000>;
+		};
+
+		partition@3800000 {
+			label = "ralink-nvram";
+			reg = <0x3800000 0x200000>;
+		};
+
+		partition@3a00000 {
+			label = "reserved";
+			reg = <0x3a00000 0x4600000>;
+			read-only;
+		};
+	};
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&gpio2 {
+	status = "okay";
+};
+
+&ethernet {
+	pinctrl-names = "default";
+	pinctrl-0 = <&ephy_pins>;
+
+	nvmem-cells = <&macaddr_2g>;
+	nvmem-cell-names = "mac-address";
+
+	mediatek,portmap = "llllw";
+};
+
+&gsw {
+	ralink,port4 = "ephy";
+};
+
+&wmac {
+	nvmem-cells = <&eeprom_2g>;
+	nvmem-cell-names = "eeprom";
+};
+
+&pcie {
+	status = "okay";
+};
+
+&pcie0 {
+	mt76@0,0 {
+		reg = <0x0000 0 0 0 0>;
+		ieee80211-freq-limit = <5000000 6000000>;
+		nvmem-cells = <&eeprom_5g>;
+		nvmem-cell-names = "eeprom";
+	};
+};
+
+&ehci {
+	status = "okay";
+};
+
+&ohci {
+	status = "okay";
+};
+
+&state_default {
+	gpio {
+		groups = "i2c", "uartf", "nd_sd", "spi refclk";
+		function = "gpio";
+	};
+};
