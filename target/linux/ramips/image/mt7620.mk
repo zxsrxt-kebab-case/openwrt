@@ -1660,14 +1660,9 @@ TARGET_DEVICES += zyxel_keenetic-viva
 
 define Device/netgear_jr6150
   SOC := mt7620a
-  BLOCKSIZE := 128k
-  PAGESIZE := 2048
-  KERNEL_SIZE := 4096k
-  IMAGE_SIZE := 28672k
-  UBINIZE_OPTS := -E 5
+  IMAGE_SIZE := 32768k
   DEVICE_VENDOR := NETGEAR
   DEVICE_MODEL := JR6150
   DEVICE_PACKAGES := kmod-mt76x0e kmod-usb2 kmod-usb-ohci
-  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
 TARGET_DEVICES += netgear_jr6150
