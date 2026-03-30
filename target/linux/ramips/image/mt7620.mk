@@ -1668,10 +1668,6 @@ define Device/netgear_jr6150
   DEVICE_VENDOR := NETGEAR
   DEVICE_MODEL := JR6150
   DEVICE_PACKAGES := kmod-mt76x0e kmod-usb2 kmod-usb-ohci
-  NETGEAR_BOARD_ID := JR6150
-  NETGEAR_REGION := 1
-  IMAGES += factory.img
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-  IMAGE/factory.img := append-ubi | netgear-chk
 endef
 TARGET_DEVICES += netgear_jr6150
