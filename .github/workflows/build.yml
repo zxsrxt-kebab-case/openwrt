@@ -44,6 +44,13 @@ jobs:
           echo 'CONFIG_TARGET_DEVICE_ramips_mt7620_DEVICE_netgear_jr6150=y' >> .config
           make defconfig
 
+      - name: Debug config
+        run: |
+          grep -i jr6150 .config || echo "JR6150 NOT in .config"
+          grep -i netgear_jr6150 target/linux/ramips/image/mt7620.mk || echo "NOT in mt7620.mk"
+          ls target/linux/ramips/dts/mt7620a_netgear_jr6150.dts || echo "DTS NOT FOUND"
+          grep DEVICE_netgear_jr6150 .config || echo "DEVICE not selected"
+
       - name: Download packages
         run: make download -j8
 
