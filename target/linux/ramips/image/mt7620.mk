@@ -1662,12 +1662,16 @@ define Device/netgear_jr6150
   SOC := mt7620a
   BLOCKSIZE := 128k
   PAGESIZE := 2048
+  KERNEL_SIZE := 4096k
   IMAGE_SIZE := 28672k
+  UBINIZE_OPTS := -E 5
   DEVICE_VENDOR := NETGEAR
   DEVICE_MODEL := JR6150
   DEVICE_PACKAGES := kmod-mt76x0e kmod-usb2 kmod-usb-ohci
   NETGEAR_BOARD_ID := JR6150
   NETGEAR_REGION := 1
-  IMAGE/factory.img := append-kernel | pad-to $$(BLOCKSIZE) | append-rootfs | pad-rootfs | netgear-chk
+  IMAGES += factory.img
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  IMAGE/factory.img := append-ubi | netgear-chk
 endef
 TARGET_DEVICES += netgear_jr6150
