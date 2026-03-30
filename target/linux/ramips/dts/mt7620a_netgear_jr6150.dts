@@ -94,136 +94,126 @@
 	};
 };
 
-&spi0 {
-	status = "okay";
+&palmbus {
+	nand@810 {
+		compatible = "mediatek,mt7620-nand";
+		reg = <0x810 0xb0>;
 
-	flash@0 {
-		compatible = "jedec,spi-nor";
-		reg = <0>;
-		spi-max-frequency = <10000000>;
+		clocks = <&sysc MT7620_CLK_SPI1>;
 
-		/*
-		 * This device uses 128 MB NAND flash, not SPI NOR.
-		 * For OpenWrt, nand@0 under &nand controller is the
-		 * correct approach. See the &nand node below.
-		 * This spi0 node should be disabled if not used.
-		 */
-		status = "disabled";
-	};
-};
+		resets = <&sysc 18>;
+		reset-names = "nand";
 
-&nand {
-	status = "okay";
+		status = "okay";
 
-	partitions {
-		compatible = "fixed-partitions";
 		#address-cells = <1>;
 		#size-cells = <1>;
 
-		partition@0 {
-			label = "u-boot";
-			reg = <0x0 0x100000>;
-			read-only;
-		};
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
 
-		partition@100000 {
-			label = "sc-pid";
-			reg = <0x100000 0x100000>;
-			read-only;
-		};
+			partition@0 {
+				label = "u-boot";
+				reg = <0x0 0x100000>;
+				read-only;
+			};
 
-		partition@200000 {
-			label = "kernel";
-			reg = <0x200000 0x400000>;
-		};
+			partition@100000 {
+				label = "sc-pid";
+				reg = <0x100000 0x100000>;
+				read-only;
+			};
 
-		partition@600000 {
-			label = "ubi";
-			reg = <0x600000 0x1c00000>;
-		};
+			partition@200000 {
+				label = "kernel";
+				reg = <0x200000 0x400000>;
+			};
 
-		/*
-		 * Stock firmware layout for reference:
-		 *   0x2200000 - 0x2e00000: Language UI packages (6x 2MB)
-		 *   0x2e00000 - 0x2f00000: WiFi calibration data
-		 *   0x2f00000 - 0x3000000: SC Private Data
-		 *   0x3000000 - 0x3200000: POT
-		 *   0x3200000 - 0x3400000: Traffic Meter
-		 *   0x3400000 - 0x3600000: DPF
-		 *   0x3600000 - 0x3800000: SC Nvram
-		 *   0x3800000 - 0x3a00000: Ralink Nvram
-		 *   0x3a00000+           : Reserved blocks
-		 */
+			partition@600000 {
+				label = "ubi";
+				reg = <0x600000 0x1c00000>;
+			};
 
-		partition@2200000 {
-			label = "lang";
-			reg = <0x2200000 0xc00000>;
-			read-only;
-		};
+			/*
+			 * Stock firmware layout for reference:
+			 *   0x2200000 - 0x2e00000: Language UI packages (6x 2MB)
+			 *   0x2e00000 - 0x2f00000: WiFi calibration data
+			 *   0x2f00000 - 0x3000000: SC Private Data
+			 *   0x3000000+           : Nvram / Reserved blocks
+			 */
 
-		factory: partition@2e00000 {
-			label = "factory";
-			reg = <0x2e00000 0x100000>;
-			read-only;
+			partition@2200000 {
+				label = "lang";
+				reg = <0x2200000 0xc00000>;
+				read-only;
+			};
 
-			nvmem-layout {
-				compatible = "fixed-layout";
-				#address-cells = <1>;
-				#size-cells = <1>;
+			factory: partition@2e00000 {
+				label = "factory";
+				reg = <0x2e00000 0x100000>;
+				read-only;
 
-				eeprom_2g: eeprom@0 {
-					reg = <0x0 0x200>;
-				};
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
 
-				eeprom_5g: eeprom@8000 {
-					reg = <0x8000 0x200>;
-				};
+					eeprom_2g: eeprom@0 {
+						reg = <0x0 0x200>;
+					};
 
-				macaddr_2g: macaddr@4 {
-					reg = <0x4 0x6>;
-				};
+					eeprom_5g: eeprom@8000 {
+						reg = <0x8000 0x200>;
+					};
 
-				macaddr_5g: macaddr@8004 {
-					reg = <0x8004 0x6>;
+					macaddr_2g: macaddr@4 {
+						reg = <0x4 0x6>;
+					};
+
+					macaddr_5g: macaddr@8004 {
+						reg = <0x8004 0x6>;
+					};
 				};
 			};
-		};
 
-		partition@2f00000 {
-			label = "sc-private";
-			reg = <0x2f00000 0x100000>;
-			read-only;
-		};
+			partition@2f00000 {
+				label = "sc-private";
+				reg = <0x2f00000 0x100000>;
+				read-only;
+			};
 
-		partition@3000000 {
-			label = "pot";
-			reg = <0x3000000 0x200000>;
-		};
+			partition@3000000 {
+				label = "pot";
+				reg = <0x3000000 0x200000>;
+			};
 
-		partition@3200000 {
-			label = "traffic-meter";
-			reg = <0x3200000 0x200000>;
-		};
+			partition@3200000 {
+				label = "traffic-meter";
+				reg = <0x3200000 0x200000>;
+			};
 
-		partition@3400000 {
-			label = "dpf";
-			reg = <0x3400000 0x200000>;
-		};
+			partition@3400000 {
+				label = "dpf";
+				reg = <0x3400000 0x200000>;
+			};
 
-		partition@3600000 {
-			label = "sc-nvram";
-			reg = <0x3600000 0x200000>;
-		};
+			partition@3600000 {
+				label = "sc-nvram";
+				reg = <0x3600000 0x200000>;
+			};
 
-		partition@3800000 {
-			label = "ralink-nvram";
-			reg = <0x3800000 0x200000>;
-		};
+			partition@3800000 {
+				label = "ralink-nvram";
+				reg = <0x3800000 0x200000>;
+			};
 
-		partition@3a00000 {
-			label = "reserved";
-			reg = <0x3a00000 0x4600000>;
-			read-only;
+			partition@3a00000 {
+				label = "reserved";
+				reg = <0x3a00000 0x4600000>;
+				read-only;
+			};
 		};
 	};
 };
@@ -282,7 +272,12 @@
 
 &state_default {
 	gpio {
-		groups = "i2c", "uartf", "nd_sd", "spi refclk";
+		groups = "i2c", "uartf";
 		function = "gpio";
+	};
+
+	nand {
+		groups = "nd_sd";
+		function = "nand";
 	};
 };
