@@ -1657,3 +1657,17 @@ define Device/zyxel_keenetic-viva
   SUPPORTED_DEVICES += kng_rc
 endef
 TARGET_DEVICES += zyxel_keenetic-viva
+
+define Device/netgear_jr6150
+  SOC := mt7620a
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  IMAGE_SIZE := 28672k
+  DEVICE_VENDOR := NETGEAR
+  DEVICE_MODEL := JR6150
+  DEVICE_PACKAGES := kmod-mt76x0e kmod-usb2 kmod-usb-ohci
+  NETGEAR_BOARD_ID := JR6150
+  NETGEAR_REGION := 1
+  IMAGE/factory.img := append-kernel | pad-to $$(BLOCKSIZE) | append-rootfs | pad-rootfs | netgear-chk
+endef
+TARGET_DEVICES += netgear_jr6150
