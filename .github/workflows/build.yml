@@ -89,4 +89,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OpenWrt_JR6150_Firmware
-          path: bin/targets/ramips/mt7620/
+          path: |
+            bin/targets/ramips/mt7620/*-jr6150-*
+            bin/targets/ramips/mt7620/sha256sums
