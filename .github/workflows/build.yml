@@ -52,6 +52,11 @@ jobs:
           # Формат: <SOC>_<device_name>.dts = mt7620a_netgear_jr6150.dts
           # SOC в mk должен быть mt7620a
 
+      - name: Fix line endings
+        run: |
+          sed -i 's/\r$//' target/linux/ramips/image/mt7620.mk
+          sed -i 's/\r$//' target/linux/ramips/dts/mt7620a_netgear_jr6150.dts
+
       - name: Generate Configuration
         run: |
           rm -f .config
