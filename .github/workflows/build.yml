@@ -42,42 +42,12 @@ jobs:
           echo "CONFIG_TARGET_ramips=y" >> .config
           echo "CONFIG_TARGET_ramips_mt7620=y" >> .config
           echo "CONFIG_TARGET_DEVICE_ramips_mt7620_DEVICE_netgear_jr6150=y" >> .config
-          echo "CONFIG_TARGET_PER_DEVICE_ROOTFS=y" >> .config
-          echo "CONFIG_NAND_SUPPORT=y" >> .config
-          echo "CONFIG_USES_UBIFS=y" >> .config
           make defconfig
 
-      - name: Check NAND devices
-        run: grep -B5 "UBINIZE_OPTS\|PAGESIZE" target/linux/ramips/image/mt7620.mk | head -30
-
-      - name: Debug config
+      - name: Verify device selected
         run: |
-          grep -i jr6150 .config || echo "JR6150 NOT in .config"
-          grep -i netgear_jr6150 target/linux/ramips/image/mt7620.mk || echo "NOT in mt7620.mk"
-          ls target/linux/ramips/dts/mt7620a_netgear_jr6150.dts || echo "DTS NOT FOUND"
-          grep DEVICE_netgear_jr6150 .config || echo "DEVICE not selected"
-
-
-      - name: Debug DTS compile
-        run: |
-          # Проверим что DTS компилируется
-          cpp -nostdinc -I target/linux/ramips/dts \
-              -I build_dir/target-*/linux-ramips_mt7620/linux-*/include \
-              -I build_dir/target-*/linux-ramips_mt7620/linux-*/include/dt-bindings \
-              -undef -x assembler-with-cpp \
-              target/linux/ramips/dts/mt7620a_netgear_jr6150.dts -o /tmp/jr6150.dts.tmp 2>&1 || true
-          
-          # Проверим зависимости пакетов
-          grep -r "kmod-mt76x0e" target/linux/ramips/image/mt7620.mk | head -5
-          
-          # Попробуем без DEVICE_PACKAGES
-          rm -f .config
-          echo "CONFIG_TARGET_ramips=y" >> .config
-          echo "CONFIG_TARGET_ramips_mt7620=y" >> .config
-          echo "CONFIG_TARGET_MULTI_PROFILE=y" >> .config
-          echo "CONFIG_TARGET_ALL_PROFILES=y" >> .config
-          make defconfig 2>&1 | tail -5
           grep jr6150 .config
+          grep DEVICE_netgear_jr6150 .config
 
       - name: Download packages
         run: make download -j8
@@ -89,6 +59,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OpenWrt_JR6150_Firmware
-          path: |
-            bin/targets/ramips/mt7620/*-jr6150-*
-            bin/targets/ramips/mt7620/sha256sums
+          path: bin/targets/ramips/mt7620/
